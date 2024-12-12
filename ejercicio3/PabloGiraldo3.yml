@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: pablo_giraldo_moran
+  name: giraldo_pablo
 
 ---
 
@@ -9,7 +9,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   namespace: giraldo_pablo
-  name: giraldo_pablo-deployment
+  name: giraldo-pablo-deployment
 spec:
   replicas: 2
   selector:
@@ -23,6 +23,8 @@ spec:
       containers:
       - name: tu-app
         image: fercdew/scale-flask:latest
+        ports:
+        - containerPort: 80
         volumeMounts:
         - name: config-volume
           mountPath: /etc/config
@@ -31,10 +33,10 @@ spec:
       volumes:
       - name: config-volume
         configMap:
-          name: giraldo_pablo-configmap
+          name: giraldo-pablo-configmap
       - name: secret-volume
         secret:
-          secretName: giraldo_pablo-secret
+          secretName: giraldo-pablo-secret
 
 ---
 
@@ -42,7 +44,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   namespace: giraldo_pablo
-  name: giraldo_pablo-configmap
+  name: giraldo-pablo-configmap
 data:
   archivo.log: "Pablo Giraldo presente"
 
@@ -52,7 +54,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   namespace: giraldo_pablo
-  name: giraldo_pablo-secret
+  name: giraldo-pablo-secret
 stringData:
   apellido_paterno: "Giraldo"
   apellido_materno: "Moran"
@@ -63,7 +65,7 @@ apiVersion: v1
 kind: Service
 metadata:
   namespace: giraldo_pablo
-  name: giraldo_pablo-service
+  name: giraldo-pablo-service
 spec:
   selector:
     app: tu-app
@@ -75,11 +77,11 @@ spec:
 
 ---
 
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
   namespace: giraldo_pablo
-  name: giraldo_pablo-cronjob
+  name: giraldo-pablo-cronjob
 spec:
   schedule: "*/4 * * * *"
   jobTemplate:
@@ -89,9 +91,5 @@ spec:
           containers:
           - name: curl
             image: curlimages/curl
-            command: ["curl", "-o", "/dev/null", "http://$(SERVICE_IP)"]
-          env:
-          - name: SERVICE_IP
-            valueFrom:
-              fieldRef:
-                fieldPath: status.loadBalancer.ingress[0].ip
+            command: ["curl", "-o", "/dev/null", "http://giraldo-pablo-service.default.svc.cluster.local"]
+          restartPolicy: OnFailure
