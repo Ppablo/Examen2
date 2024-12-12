@@ -7,7 +7,7 @@ app = Flask(__name__)
 def hello():
     # Muestra el ID del contenedor para verificar el balanceo de carga
     container_id = os.uname()[1]
-    return f"Hello, World: Pablo Giraldo Moran! from container {container_id}"
+    return f"Hello, World: Pablo Giraldo Moran  {container_id}"
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)

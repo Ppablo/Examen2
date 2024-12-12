@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pablo_giraldo_moran
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: giraldo_pablo
+  name: giraldo_pablo-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tu-app
+  template:
+    metadata:
+      labels:
+        app: tu-app
+    spec:
+      containers:
+      - name: tu-app
+        image: fercdew/scale-flask:latest
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+        - name: secret-volume
+          mountPath: /etc/secrets
+      volumes:
+      - name: config-volume
+        configMap:
+          name: giraldo_pablo-configmap
+      - name: secret-volume
+        secret:
+          secretName: giraldo_pablo-secret
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: giraldo_pablo
+  name: giraldo_pablo-configmap
+data:
+  archivo.log: "Pablo Giraldo presente"
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: giraldo_pablo
+  name: giraldo_pablo-secret
+stringData:
+  apellido_paterno: "Giraldo"
+  apellido_materno: "Moran"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: giraldo_pablo
+  name: giraldo_pablo-service
+spec:
+  selector:
+    app: tu-app
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: LoadBalancer
+
+---
+
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  namespace: giraldo_pablo
+  name: giraldo_pablo-cronjob
+spec:
+  schedule: "*/4 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: curl
+            image: curlimages/curl
+            command: ["curl", "-o", "/dev/null", "http://$(SERVICE_IP)"]
+          env:
+          - name: SERVICE_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.loadBalancer.ingress[0].ip
